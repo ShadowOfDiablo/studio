@@ -3,6 +3,8 @@ import { defaultContent } from '../../gradinko/src/content.js'
 
 const PROJECTS_KEY = 'studio-projects-v2'
 const TOKEN_KEY = 'studio-github-token'
+const OLD_DRAFT_KEY = 'gradinko-studio-draft-v1'
+const OLD_IMAGES_KEY = 'gradinko-studio-images-v1'
 
 const StoreContext = createContext(null)
 export const useStore = () => useContext(StoreContext)
@@ -33,17 +35,52 @@ function makeDefaultProject(name = 'New Project') {
     branch: 'main',
     contentPath: 'public/content.json',
     imagesPath: 'public/images/',
+    lastOpenedAt: null,
     pages: [{ id: pageId, name: 'Home', slug: '', content: clone(defaultContent) }]
+  }
+}
+
+function migrateOldGradinko(projects) {
+  try {
+    const oldDraft = localStorage.getItem(OLD_DRAFT_KEY)
+    if (!oldDraft) return projects
+    const content = JSON.parse(oldDraft)
+    const projId = uid('proj')
+    const pageId = uid('page')
+    const proj = {
+      id: projId,
+      name: 'Gradinko',
+      gitUrl: 'https://github.com/ShadowOfDiablo/gradinko.git',
+      branch: 'main',
+      contentPath: 'public/content.json',
+      imagesPath: 'public/images/',
+      lastOpenedAt: Date.now(),
+      pages: [{ id: pageId, name: 'Home', slug: '', content }]
+    }
+    const oldImgs = localStorage.getItem(OLD_IMAGES_KEY)
+    if (oldImgs) {
+      localStorage.setItem(`studio-images-${projId}`, oldImgs)
+      localStorage.removeItem(OLD_IMAGES_KEY)
+    }
+    localStorage.removeItem(OLD_DRAFT_KEY)
+    const migrated = [...projects, proj]
+    localStorage.setItem(PROJECTS_KEY, JSON.stringify(migrated))
+    return migrated
+  } catch (e) {
+    console.warn('Gradinko migration failed', e)
+    return projects
   }
 }
 
 function loadProjects() {
   try {
     const raw = localStorage.getItem(PROJECTS_KEY)
+    let projects = []
     if (raw) {
-      const projects = JSON.parse(raw)
-      if (Array.isArray(projects) && projects.length > 0) return projects
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed) && parsed.length > 0) projects = parsed
     }
+    return migrateOldGradinko(projects)
   } catch {}
   return []
 }
@@ -177,6 +214,7 @@ export function StoreProvider({ children }) {
     proj.branch = branch
     proj.contentPath = contentPath
     proj.imagesPath = imagesPath
+    proj.lastOpenedAt = Date.now()
     setProjects(prev => [...prev, proj])
     setActiveProjectId(proj.id)
     setActivePageId(proj.pages[0].id)
@@ -196,6 +234,7 @@ export function StoreProvider({ children }) {
   const openProject = useCallback((id) => {
     const proj = projects.find(p => p.id === id)
     if (!proj) return
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, lastOpenedAt: Date.now() } : p))
     setActiveProjectId(id)
     setActivePageId(proj.pages[0]?.id || null)
   }, [projects])
