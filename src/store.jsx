@@ -36,6 +36,7 @@ function makeDefaultProject(name = 'New Project') {
     contentPath: 'public/content.json',
     imagesPath: 'public/images/',
     lastOpenedAt: null,
+    isNew: true,
     pages: [{ id: pageId, name: 'Home', slug: '', content: clone(defaultContent) }]
   }
 }
@@ -55,6 +56,7 @@ function migrateOldGradinko(projects) {
       contentPath: 'public/content.json',
       imagesPath: 'public/images/',
       lastOpenedAt: Date.now(),
+      isNew: false,
       pages: [{ id: pageId, name: 'Home', slug: '', content }]
     }
     const oldImgs = localStorage.getItem(OLD_IMAGES_KEY)
@@ -292,6 +294,10 @@ export function StoreProvider({ children }) {
     }))
   }, [activeProjectId, activePageId])
 
+  const clearIsNew = useCallback((id) => {
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, isNew: false } : p))
+  }, [])
+
   const setGithubToken = useCallback((token) => {
     setGithubTokenState(token)
     try { localStorage.setItem(TOKEN_KEY, token) } catch {}
@@ -320,13 +326,14 @@ export function StoreProvider({ children }) {
     removeImage,
     imageURL,
     importContent,
+    clearIsNew,
     githubToken,
     setGithubToken,
   }), [
     projects, activeProject, activeProjectId,
     openProject, closeProject, createAndOpenProject, updateProject, deleteProject,
     activePage, activePageId, setActivePageId, createPage, updatePage, deletePage,
-    content, update, reset, importContent,
+    content, update, reset, importContent, clearIsNew,
     images, addImage, removeImage, imageURL,
     githubToken, setGithubToken,
   ])

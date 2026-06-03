@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useStore } from './store.jsx'
 import Preview from './preview/Preview.jsx'
 import ExportDialog from './export/ExportDialog.jsx'
@@ -9,6 +9,7 @@ import ServicesPanel from './editor/ServicesPanel.jsx'
 import AboutPanel from './editor/AboutPanel.jsx'
 import GalleryPanel from './editor/GalleryPanel.jsx'
 import CustomSectionsPanel from './editor/CustomSectionsPanel.jsx'
+import FreeCodePanel from './editor/FreeCodePanel.jsx'
 import ContactPanel from './editor/ContactPanel.jsx'
 import FooterPanel from './editor/FooterPanel.jsx'
 
@@ -19,17 +20,26 @@ const SECTIONS = [
   { id: 'about', label: 'За нас', Panel: AboutPanel },
   { id: 'gallery', label: 'Галерия', Panel: GalleryPanel },
   { id: 'custom', label: 'Секции', Panel: CustomSectionsPanel },
+  { id: 'freecode', label: 'Свободен код', Panel: FreeCodePanel },
   { id: 'contact', label: 'Контакти', Panel: ContactPanel },
   { id: 'footer', label: 'Футър', Panel: FooterPanel }
 ]
 
 export default function StudioView() {
-  const { activeProject, activePage, activePageId, setActivePageId, reset, closeProject, createPage, deletePage } = useStore()
+  const { activeProject, activePage, activePageId, setActivePageId, reset, closeProject, createPage, deletePage, clearIsNew } = useStore()
   const [active, setActive] = useState('brand')
   const [showExport, setShowExport] = useState(false)
   const [showImport, setShowImport] = useState(false)
   const [addingPage, setAddingPage] = useState(false)
   const [newPageName, setNewPageName] = useState('')
+
+  // Auto-show import dialog for brand-new projects
+  useEffect(() => {
+    if (activeProject?.isNew) {
+      clearIsNew(activeProject.id)
+      setShowImport(true)
+    }
+  }, [activeProject?.id]) // only on project switch
 
   const ActivePanel = SECTIONS.find(s => s.id === active)?.Panel || SECTIONS[0].Panel
 
@@ -99,6 +109,7 @@ export default function StudioView() {
               onClick={() => setActive(s.id)}
             >
               {s.label}
+              {s.id === 'freecode' && <span className="nav-badge">{'</>'}</span>}
             </button>
           ))}
         </nav>
