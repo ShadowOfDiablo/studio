@@ -278,6 +278,20 @@ export function StoreProvider({ children }) {
     }
   }, [activeProjectId, activePageId, projects])
 
+  const importContent = useCallback((newContent) => {
+    if (!activeProjectId || !activePageId) return
+    setProjects(prev => prev.map(proj => {
+      if (proj.id !== activeProjectId) return proj
+      return {
+        ...proj,
+        pages: proj.pages.map(page => {
+          if (page.id !== activePageId) return page
+          return { ...page, content: clone(newContent) }
+        })
+      }
+    }))
+  }, [activeProjectId, activePageId])
+
   const setGithubToken = useCallback((token) => {
     setGithubTokenState(token)
     try { localStorage.setItem(TOKEN_KEY, token) } catch {}
@@ -305,13 +319,14 @@ export function StoreProvider({ children }) {
     addImage,
     removeImage,
     imageURL,
+    importContent,
     githubToken,
     setGithubToken,
   }), [
     projects, activeProject, activeProjectId,
     openProject, closeProject, createAndOpenProject, updateProject, deleteProject,
     activePage, activePageId, setActivePageId, createPage, updatePage, deletePage,
-    content, update, reset,
+    content, update, reset, importContent,
     images, addImage, removeImage, imageURL,
     githubToken, setGithubToken,
   ])

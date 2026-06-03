@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from './store.jsx'
 import Preview from './preview/Preview.jsx'
 import ExportDialog from './export/ExportDialog.jsx'
+import ImportDialog from './projects/ImportDialog.jsx'
 import BrandPanel from './editor/BrandPanel.jsx'
 import HeroPanel from './editor/HeroPanel.jsx'
 import ServicesPanel from './editor/ServicesPanel.jsx'
@@ -26,6 +27,7 @@ export default function StudioView() {
   const { activeProject, activePage, activePageId, setActivePageId, reset, closeProject, createPage, deletePage } = useStore()
   const [active, setActive] = useState('brand')
   const [showExport, setShowExport] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [addingPage, setAddingPage] = useState(false)
   const [newPageName, setNewPageName] = useState('')
 
@@ -105,7 +107,10 @@ export default function StudioView() {
           <button className="btn btn-primary" onClick={() => setShowExport(true)}>
             Експорт ↑
           </button>
-          <button className="btn btn-ghost" onClick={reset}>Изтриване</button>
+          <button className="btn btn-ghost" onClick={() => setShowImport(true)}>
+            Импорт / AI ↓
+          </button>
+          <button className="btn btn-ghost" onClick={reset}>Изчисти</button>
           <small className="autosave-hint">Автоматично записване</small>
         </div>
       </aside>
@@ -128,6 +133,7 @@ export default function StudioView() {
       </section>
 
       {showExport && <ExportDialog onClose={() => setShowExport(false)} />}
+      {showImport && <ImportDialog onClose={() => setShowImport(false)} />}
     </div>
   )
 }
