@@ -12,8 +12,10 @@ import CustomSectionsPanel from './editor/CustomSectionsPanel.jsx'
 import FreeCodePanel from './editor/FreeCodePanel.jsx'
 import ContactPanel from './editor/ContactPanel.jsx'
 import FooterPanel from './editor/FooterPanel.jsx'
+import ThemePanel from './editor/ThemePanel.jsx'
 
 const SECTIONS = [
+  { id: 'theme', label: 'Тема', Panel: ThemePanel },
   { id: 'brand', label: 'Бранд', Panel: BrandPanel },
   { id: 'hero', label: 'Начало', Panel: HeroPanel },
   { id: 'services', label: 'Услуги', Panel: ServicesPanel },

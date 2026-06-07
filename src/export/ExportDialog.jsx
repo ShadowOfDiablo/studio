@@ -3,6 +3,8 @@ import { useStore } from '../store.jsx'
 import { exportContentBundle } from './exportContentBundle.js'
 import { exportSiteBundle } from './exportSiteBundle.js'
 import { pushToGitHub } from './pushToGithub.js'
+import GitHubConnect from '../auth/GitHubConnect.jsx'
+import RepoPicker from '../auth/RepoPicker.jsx'
 
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob)
@@ -67,17 +69,27 @@ function buildPushFiles({ pages, images, contentPath, imagesPath }) {
 }
 
 export default function ExportDialog({ onClose }) {
-  const { content, images, activeProject, githubToken, setGithubToken } = useStore()
+  const { content, images, activeProject, githubToken, githubUser, updateProject } = useStore()
 
   const [busy, setBusy] = useState(null) // 'content' | 'site' | 'git' | null
   const [err, setErr] = useState(null)
   const [progress, setProgress] = useState('')
-  const [tokenInput, setTokenInput] = useState(githubToken || '')
-  const [showToken, setShowToken] = useState(!githubToken)
   const [success, setSuccess] = useState(null)
+  const [pushGitUrl, setPushGitUrl] = useState(activeProject?.gitUrl || '')
+  const [pushBranch, setPushBranch] = useState(activeProject?.branch || 'main')
 
-  const hasGitUrl = !!activeProject?.gitUrl
+  const hasGitUrl = !!(activeProject?.gitUrl || pushGitUrl)
+  const isConnected = !!(githubUser || githubToken)
   const projectName = activeProject?.name || 'project'
+
+  function handleRepoSelect({ url, branch }) {
+    setPushGitUrl(url)
+    setPushBranch(branch || 'main')
+    // Persist the selection to the project
+    if (activeProject) {
+      updateProject(activeProject.id, { gitUrl: url, branch: branch || 'main' })
+    }
+  }
 
   const doContent = async () => {
     setBusy('content'); setErr(null)
@@ -102,15 +114,11 @@ export default function ExportDialog({ onClose }) {
   }
 
   const doGitPush = async () => {
-    const token = tokenInput.trim()
-    if (!token) { setShowToken(true); setErr('Въведете GitHub Personal Access Token.'); return }
-    if (!activeProject?.gitUrl) {
-      setErr('Няма Git URL за този проект. Добавете го в настройките на проекта.')
-      return
-    }
+    if (!githubToken) { setErr('Влезте с GitHub за да публикувате.'); return }
+    const repoUrl = activeProject?.gitUrl || pushGitUrl
+    if (!repoUrl) { setErr('Изберете репозиторио по-долу.'); return }
 
     setBusy('git'); setErr(null); setProgress(''); setSuccess(null)
-    if (token !== githubToken) setGithubToken(token)
 
     try {
       const files = buildPushFiles({
@@ -121,9 +129,9 @@ export default function ExportDialog({ onClose }) {
       })
 
       const result = await pushToGitHub({
-        token,
-        repoUrl: activeProject.gitUrl,
-        branch: activeProject.branch || 'main',
+        token: githubToken,
+        repoUrl,
+        branch: activeProject?.branch || pushBranch || 'main',
         files,
         commitMessage: `Studio: update ${projectName} content`,
         onProgress: setProgress
@@ -167,16 +175,22 @@ export default function ExportDialog({ onClose }) {
           <button className="link-btn" onClick={onClose}>✕</button>
         </header>
 
-        <div className={`export-options ${hasGitUrl ? 'export-options-3' : ''}`}>
-          {hasGitUrl && (
+        {/* GitHub auth status */}
+        <div className="export-auth-row">
+          <GitHubConnect />
+        </div>
+
+        <div className={`export-options ${isConnected ? 'export-options-3' : ''}`}>
+          {isConnected && (
             <button className="export-card export-card-primary" onClick={doGitPush} disabled={busy !== null}>
               <div className="export-icon">🚀</div>
-              <h3>Push to GitHub</h3>
+              <h3>Публикувай в GitHub</h3>
               <p>
-                Качва всички промени директно в репото.
-                Vercel разгръща автоматично след push.
+                {hasGitUrl
+                  ? 'Качва всички промени директно в репото. Vercel разгръща автоматично.'
+                  : 'Изберете репозиторио по-долу и публикувайте.'}
               </p>
-              <strong>{busy === 'git' ? (progress || 'Изпращане…') : 'Публикувай в GitHub'}</strong>
+              <strong>{busy === 'git' ? (progress || 'Изпращане…') : 'Push to GitHub →'}</strong>
             </button>
           )}
 
@@ -195,36 +209,15 @@ export default function ExportDialog({ onClose }) {
           </button>
         </div>
 
-        {hasGitUrl && (showToken || !githubToken) && (
-          <div className="token-section">
-            <div className="field">
-              <label className="field-label">GitHub Personal Access Token</label>
-              <input
-                type="password"
-                value={tokenInput}
-                onChange={e => setTokenInput(e.target.value)}
-                placeholder="ghp_xxxxxxxxxxxx"
-                autoComplete="off"
-              />
-              <small className="field-hint">
-                Нужни права: <strong>Contents: Read &amp; Write</strong>.
-                Токенът се запазва само в браузъра.
-                {githubToken && (
-                  <button
-                    className="link-btn"
-                    style={{ marginLeft: '0.5rem', fontSize: '0.75rem' }}
-                    onClick={() => setShowToken(false)}
-                  >Скрий</button>
-                )}
-              </small>
-            </div>
-          </div>
-        )}
-
-        {hasGitUrl && githubToken && !showToken && (
-          <div className="token-stored">
-            <span>🔑 Token запазен</span>
-            <button className="link-btn" onClick={() => setShowToken(true)}>Промени</button>
+        {/* Repo picker — shown when connected but no repo linked yet */}
+        {isConnected && !activeProject?.gitUrl && (
+          <div className="export-repo-pick">
+            <p className="export-repo-label">
+              {pushGitUrl
+                ? <>Ще публикувате в: <code>{pushGitUrl.replace('https://github.com/', '').replace('.git', '')}</code></>
+                : 'Изберете репозиторио:'}
+            </p>
+            <RepoPicker currentUrl={pushGitUrl} onSelect={handleRepoSelect} />
           </div>
         )}
 

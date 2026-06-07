@@ -1010,3 +1010,228 @@ ul { list-style: none; }
   font-family: monospace;
   opacity: 0.8;
 }
+
+/* ── GitHub OAuth / auth components ── */
+.btn-github {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #24292e;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.55rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.btn-github:hover { background: #3a3f44; }
+
+.gh-connected {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.875rem;
+}
+.gh-avatar {
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.gh-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1;
+  min-width: 0;
+}
+.gh-info strong { font-size: 0.875rem; }
+.gh-label { font-size: 0.72rem; color: var(--text-soft); }
+.gh-selected-url { font-weight: 400; color: var(--text-soft); }
+
+/* Repo picker */
+.repo-picker {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: var(--panel);
+}
+.repo-picker-head {
+  display: flex;
+  gap: 0;
+}
+.repo-search {
+  flex: 1;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  background: var(--bg);
+  outline: none;
+  font-family: inherit;
+}
+.repo-search:focus { background: var(--panel); }
+.repo-create-toggle {
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  background: var(--bg);
+  padding: 0.5rem 0.875rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--green);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.repo-create-toggle:hover, .repo-create-toggle.active { background: var(--green); color: #fff; }
+
+.repo-create-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--cream);
+  flex-wrap: wrap;
+}
+.repo-create-form input {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  font-size: 0.82rem;
+  font-family: inherit;
+}
+.checkbox-label.small { font-size: 0.8rem; white-space: nowrap; }
+.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+
+.repo-list {
+  max-height: 220px;
+  overflow-y: auto;
+}
+.repo-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--text);
+  transition: background 0.1s;
+}
+.repo-item:last-child { border-bottom: none; }
+.repo-item:hover { background: var(--bg); }
+.repo-item.selected { background: #e8f5e9; font-weight: 600; }
+.repo-priv { font-size: 0.9rem; flex-shrink: 0; }
+.repo-name { flex: 1; font-family: monospace; font-size: 0.8rem; }
+.repo-check { color: var(--green); font-weight: 700; }
+
+/* Export dialog auth row */
+.export-auth-row {
+  padding: 0.75rem 1.25rem 0;
+}
+.export-repo-pick {
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--border);
+}
+.export-repo-label {
+  font-size: 0.82rem;
+  color: var(--text-soft);
+  margin-bottom: 0.5rem;
+}
+
+/* OAuth loading screen */
+.oauth-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: var(--bg);
+}
+.oauth-loading-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  color: var(--text-soft);
+  font-size: 1rem;
+}
+.oauth-spin {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid var(--border);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- Theme panel ---------- */
+.panel-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-soft);
+  margin: 1.5rem 0 0.75rem;
+}
+.color-field { gap: 0.375rem; }
+.color-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.color-swatch {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.375rem;
+  border: 1.5px solid var(--border);
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.color-hex {
+  flex: 1;
+  font-family: 'SF Mono', 'Fira Mono', monospace;
+  font-size: 0.88rem;
+}
+.theme-presets { margin-bottom: 1.25rem; }
+.preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.preset-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border: 1.5px solid var(--border);
+  border-radius: 1.5rem;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.preset-btn:hover { border-color: var(--green); background: var(--bg); }
+.preset-swatch {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}

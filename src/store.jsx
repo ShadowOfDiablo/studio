@@ -3,6 +3,7 @@ import { defaultContent } from '../../gradinko/src/content.js'
 
 const PROJECTS_KEY = 'studio-projects-v2'
 const TOKEN_KEY = 'studio-github-token'
+const USER_KEY = 'studio-github-user'
 const OLD_DRAFT_KEY = 'gradinko-studio-draft-v1'
 const OLD_IMAGES_KEY = 'gradinko-studio-images-v1'
 
@@ -96,6 +97,9 @@ export function StoreProvider({ children }) {
   const [images, setImages] = useState(() => new Map())
   const objectURLs = useRef(new Map())
   const [githubToken, setGithubTokenState] = useState(() => localStorage.getItem(TOKEN_KEY) || '')
+  const [githubUser, setGithubUserState] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null') } catch { return null }
+  })
 
   const activeProject = projects.find(p => p.id === activeProjectId) || null
   const activePage = activeProject?.pages.find(p => p.id === activePageId) || null
@@ -303,6 +307,17 @@ export function StoreProvider({ children }) {
     try { localStorage.setItem(TOKEN_KEY, token) } catch {}
   }, [])
 
+  const setGithubUser = useCallback((user) => {
+    setGithubUserState(user)
+    try { localStorage.setItem(USER_KEY, JSON.stringify(user)) } catch {}
+  }, [])
+
+  const githubLogout = useCallback(() => {
+    setGithubTokenState('')
+    setGithubUserState(null)
+    try { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY) } catch {}
+  }, [])
+
   const value = useMemo(() => ({
     projects,
     activeProject,
@@ -329,13 +344,16 @@ export function StoreProvider({ children }) {
     clearIsNew,
     githubToken,
     setGithubToken,
+    githubUser,
+    setGithubUser,
+    githubLogout,
   }), [
     projects, activeProject, activeProjectId,
     openProject, closeProject, createAndOpenProject, updateProject, deleteProject,
     activePage, activePageId, setActivePageId, createPage, updatePage, deletePage,
     content, update, reset, importContent, clearIsNew,
     images, addImage, removeImage, imageURL,
-    githubToken, setGithubToken,
+    githubToken, setGithubToken, githubUser, setGithubUser, githubLogout,
   ])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
