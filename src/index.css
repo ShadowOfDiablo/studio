@@ -542,6 +542,7 @@ ul { list-style: none; }
 /* ----------- Export additions ----------- */
 .modal-wide { max-width: 50rem; }
 .export-options-3 { grid-template-columns: repeat(3, 1fr); }
+.export-options-4 { grid-template-columns: repeat(4, 1fr); }
 
 .export-card-primary {
   border-color: var(--green-light) !important;

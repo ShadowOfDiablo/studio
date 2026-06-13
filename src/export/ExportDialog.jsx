@@ -3,6 +3,7 @@ import { useStore } from '../store.jsx'
 import { exportContentBundle } from './exportContentBundle.js'
 import { exportSiteBundle } from './exportSiteBundle.js'
 import { pushToGitHub } from './pushToGithub.js'
+import { pullProjectFromGitHub } from './pullFromGithub.js'
 import GitHubConnect from '../auth/GitHubConnect.jsx'
 import RepoPicker from '../auth/RepoPicker.jsx'
 
@@ -69,7 +70,7 @@ function buildPushFiles({ pages, images, contentPath, imagesPath }) {
 }
 
 export default function ExportDialog({ onClose }) {
-  const { content, images, activeProject, githubToken, githubUser, updateProject } = useStore()
+  const { content, images, activeProject, githubToken, githubUser, updateProject, replaceAllContent } = useStore()
 
   const [busy, setBusy] = useState(null) // 'content' | 'site' | 'git' | null
   const [err, setErr] = useState(null)
@@ -143,22 +144,59 @@ export default function ExportDialog({ onClose }) {
     } finally { setBusy(null) }
   }
 
+  const doGitPull = async () => {
+    if (!githubToken) { setErr('Влезте с GitHub за да изтеглите.'); return }
+    const repoUrl = activeProject?.gitUrl || pushGitUrl
+    if (!repoUrl) { setErr('Проектът няма свързано репо.'); return }
+    if (!confirm('Това ще замени локалното съдържание и снимките с версията от GitHub. Продължи?')) return
+
+    setBusy('pull'); setErr(null); setProgress(''); setSuccess(null)
+
+    try {
+      const { contentByPageId, imageMap, stats } = await pullProjectFromGitHub({
+        token: githubToken,
+        gitUrl: repoUrl,
+        pages: activeProject.pages,
+        contentPath: activeProject.contentPath || 'public/content.json',
+        imagesPath: activeProject.imagesPath || 'public/images/',
+        branch: activeProject?.branch || pushBranch || 'main',
+        onProgress: setProgress
+      })
+      replaceAllContent({ contentByPageId, imageMap })
+      setSuccess({ type: 'pull', ...stats })
+    } catch (e) {
+      setErr(e.message || String(e))
+    } finally { setBusy(null) }
+  }
+
   if (success) {
+    const isPull = success.type === 'pull'
     return (
       <div className="modal-backdrop" onClick={onClose}>
         <div className="modal" onClick={e => e.stopPropagation()}>
           <header className="modal-head">
-            <h2>Публикувано успешно!</h2>
+            <h2>{isPull ? 'Изтеглено успешно!' : 'Публикувано успешно!'}</h2>
             <button className="link-btn" onClick={onClose}>✕</button>
           </header>
           <div className="export-success">
             <div className="export-success-icon">✅</div>
-            <p>Commit <code>{success.commitSha.slice(0, 7)}</code> е качен в клон <code>{success.branch}</code>.</p>
-            <p className="export-success-hint">Vercel ще разгърне новата версия автоматично след няколко секунди.</p>
+            {isPull ? (
+              <>
+                <p>Заредени <strong>{success.pages}</strong> {success.pages === 1 ? 'страница' : 'страници'} и <strong>{success.images}</strong> {success.images === 1 ? 'снимка' : 'снимки'} от GitHub.</p>
+                <p className="export-success-hint">Студиото е синхронизирано с последната версия в репото.</p>
+              </>
+            ) : (
+              <>
+                <p>Commit <code>{success.commitSha.slice(0, 7)}</code> е качен в клон <code>{success.branch}</code>.</p>
+                <p className="export-success-hint">Vercel ще разгърне новата версия автоматично след няколко секунди.</p>
+              </>
+            )}
             <div className="row" style={{ justifyContent: 'center' }}>
-              <a href={success.repoUrl} target="_blank" rel="noreferrer" className="btn btn-primary-dark">
-                Виж в GitHub ↗
-              </a>
+              {!isPull && (
+                <a href={success.repoUrl} target="_blank" rel="noreferrer" className="btn btn-primary-dark">
+                  Виж в GitHub ↗
+                </a>
+              )}
               <button className="btn btn-outline" onClick={onClose}>Затвори</button>
             </div>
           </div>
@@ -180,7 +218,15 @@ export default function ExportDialog({ onClose }) {
           <GitHubConnect />
         </div>
 
-        <div className={`export-options ${isConnected ? 'export-options-3' : ''}`}>
+        <div className={`export-options ${isConnected ? (hasGitUrl ? 'export-options-4' : 'export-options-3') : ''}`}>
+          {isConnected && hasGitUrl && (
+            <button className="export-card" onClick={doGitPull} disabled={busy !== null}>
+              <div className="export-icon">⬇️</div>
+              <h3>Изтегли от GitHub</h3>
+              <p>Синхронизира студиото с последната версия в репото. Заменя локалните промени.</p>
+              <strong>{busy === 'pull' ? (progress || 'Изтегляне…') : 'Pull from GitHub ↓'}</strong>
+            </button>
+          )}
           {isConnected && (
             <button className="export-card export-card-primary" onClick={doGitPush} disabled={busy !== null}>
               <div className="export-icon">🚀</div>

@@ -298,6 +298,24 @@ export function StoreProvider({ children }) {
     }))
   }, [activeProjectId, activePageId])
 
+  // Replace all pages content + images — used by the GitHub pull operation
+  const replaceAllContent = useCallback(({ contentByPageId, imageMap }) => {
+    if (!activeProjectId) return
+    for (const url of objectURLs.current.values()) URL.revokeObjectURL(url)
+    objectURLs.current.clear()
+    setProjects(prev => prev.map(proj => {
+      if (proj.id !== activeProjectId) return proj
+      return {
+        ...proj,
+        pages: proj.pages.map(page => {
+          const newContent = contentByPageId.get(page.id)
+          return newContent ? { ...page, content: clone(newContent) } : page
+        })
+      }
+    }))
+    setImages(imageMap)
+  }, [activeProjectId])
+
   const clearIsNew = useCallback((id) => {
     setProjects(prev => prev.map(p => p.id === id ? { ...p, isNew: false } : p))
   }, [])
@@ -341,6 +359,7 @@ export function StoreProvider({ children }) {
     removeImage,
     imageURL,
     importContent,
+    replaceAllContent,
     clearIsNew,
     githubToken,
     setGithubToken,
@@ -351,7 +370,7 @@ export function StoreProvider({ children }) {
     projects, activeProject, activeProjectId,
     openProject, closeProject, createAndOpenProject, updateProject, deleteProject,
     activePage, activePageId, setActivePageId, createPage, updatePage, deletePage,
-    content, update, reset, importContent, clearIsNew,
+    content, update, reset, importContent, replaceAllContent, clearIsNew,
     images, addImage, removeImage, imageURL,
     githubToken, setGithubToken, githubUser, setGithubUser, githubLogout,
   ])
