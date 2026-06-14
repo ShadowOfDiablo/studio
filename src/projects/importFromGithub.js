@@ -32,6 +32,8 @@ export async function fetchContentFromGitHub({ token, gitUrl, contentPath, branc
   try {
     return JSON.parse(text)
   } catch (e) {
-    throw new Error(`Файлът "${contentPath}" съдържа невалиден JSON: ${e.message}`)
+    const pos = parseInt(e.message.match(/position (\d+)/)?.[1] ?? '-1')
+    const snippet = pos >= 0 ? ` …«${text.slice(Math.max(0, pos - 20), pos + 20)}»…` : ''
+    throw new Error(`Файлът "${contentPath}" съдържа невалиден JSON: ${e.message}${snippet}`)
   }
 }

@@ -61,6 +61,7 @@ export async function pullProjectFromGitHub({ token, gitUrl, pages, contentPath,
   // 1. Fetch content JSON for each local page
   onProgress('Изтегляне на съдържание…')
   const contentByPageId = new Map()
+  const fetchErrors = []
 
   for (const page of pages) {
     const filePath = page.slug
@@ -71,17 +72,21 @@ export async function pullProjectFromGitHub({ token, gitUrl, pages, contentPath,
       `${apiBase}/contents/${filePath}?ref=${resolvedBranch}`,
       { headers: rawHeaders }
     )
-    if (!res.ok) continue
+    if (!res.ok) {
+      fetchErrors.push(`${filePath} (HTTP ${res.status} на клон "${resolvedBranch}")`)
+      continue
+    }
     const text = await res.text()
     try {
       contentByPageId.set(page.id, restoreImageIds(JSON.parse(text)))
-    } catch {
-      // skip pages whose content.json is invalid on GitHub
+    } catch (e) {
+      fetchErrors.push(`${filePath}: невалиден JSON — ${e.message}`)
     }
   }
 
   if (contentByPageId.size === 0) {
-    throw new Error('Не са намерени файлове с съдържание в репото.')
+    const detail = fetchErrors.length ? `\n${fetchErrors.join('\n')}` : ''
+    throw new Error(`Не са намерени файлове с съдържание в репото.${detail}`)
   }
 
   // 2. List and download images directory
